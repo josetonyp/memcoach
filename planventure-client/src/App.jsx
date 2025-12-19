@@ -8,7 +8,7 @@ import './App.css';
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <Router basename="/memcoach">
         <MainLayout>
           <Routes>
             {publicRoutes.map((route) => (
