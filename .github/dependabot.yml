@@ -1,0 +1,14 @@
+# This is the dependabot configuration file that automates dependency updates
+# Updates section configures how dependabot should handle dependency updates:
+# - Monitors pip dependencies in the planventure-api directory
+# - Checks for updates weekly
+#
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/planventure-api"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "python"
