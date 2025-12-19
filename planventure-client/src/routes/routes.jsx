@@ -8,6 +8,7 @@ import TripDetailsPage from '../pages/TripDetailsPage';
 import EditTripPage from '../pages/EditTripPage';
 import MemoryGamePage from '../pages/MemoryGamePage';
 import HistoryPage from '../pages/HistoryPage';
+import NumberGalleryPage from '../pages/NumberGalleryPage';
 
 export const publicRoutes = [
   {
@@ -29,6 +30,10 @@ export const publicRoutes = [
   {
     path: '/history',
     element: <HistoryPage />,
+  },
+  {
+    path: '/gallery',
+    element: <NumberGalleryPage />,
   }
 ];
 

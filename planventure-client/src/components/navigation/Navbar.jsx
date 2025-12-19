@@ -39,6 +39,12 @@ const Navbar = () => {
               </Button>
               <Button
                 color="inherit"
+                onClick={() => navigate('/gallery')}
+              >
+                Gallery
+              </Button>
+              <Button
+                color="inherit"
                 onClick={() => navigate('/history')}
               >
                 History
@@ -59,12 +65,20 @@ const Navbar = () => {
                 onClick={() => navigate('/login')}
               >
                 Login
-              </Button>              <Button
+              </Button>
+              <Button
+                color="inherit"
+                onClick={() => navigate('/gallery')}
+              >
+                Gallery
+              </Button>
+              <Button
                 color="inherit"
                 onClick={() => navigate('/history')}
               >
                 History
-              </Button>              <Button 
+              </Button>
+              <Button 
                 color="inherit" 
                 variant="outlined" 
                 onClick={() => navigate('/signup')}
