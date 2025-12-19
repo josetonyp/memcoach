@@ -5,7 +5,7 @@ import path from "path";
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: path.join(__dirname, "../client"),
+    outDir: path.join(__dirname, "../docs"),
   },
   esbuild: {
     loader: "jsx",
