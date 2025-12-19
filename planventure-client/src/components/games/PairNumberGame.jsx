@@ -3,7 +3,7 @@ import { Box, Typography, Button, Stack, TextField, Paper, InputAdornment } from
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import { useSelector, useDispatch } from 'react-redux';
-import { tick, hideNow, verifyInput, reset, setInputValue, startRound, recordAttempt } from '../../store/gameSlice';
+import { tick, hideNow, verifyInput, reset, setInputValue, startRound, recordAttempt, tickMemorizeElapsed, tickGuessElapsed } from '../../store/gameSlice';
 
 const generatePairs = (count = 5) => {
   const pairs = [];
@@ -33,9 +33,13 @@ const PairNumberGame = () => {
   const inputValue = useSelector((s) => s.game.inputValue);
   const result = useSelector((s) => s.game.result);
   const history = useSelector((s) => s.game.history || []);
+  const memorizeElapsed = useSelector((s) => s.game.memorizeElapsed);
+  const guessElapsed = useSelector((s) => s.game.guessElapsed);
 
   const intervalRef = useRef(null);
   const timeoutRef = useRef(null);
+  const memorizeIntervalRef = useRef(null);
+  const guessIntervalRef = useRef(null);
   const inputRef = useRef(null);
   const [showFail, setShowFail] = useState(false);
   const [resultAnimate, setResultAnimate] = useState(false);
@@ -64,6 +68,28 @@ const PairNumberGame = () => {
       clearTimeout(timeoutRef.current);
     };
   }, [phase, timerRemaining, dispatch]);
+
+  // track memorize elapsed time during showing phase
+  useEffect(() => {
+    clearInterval(memorizeIntervalRef.current);
+    if (phase === 'showing') {
+      memorizeIntervalRef.current = setInterval(() => {
+        dispatch(tickMemorizeElapsed());
+      }, 1000);
+    }
+    return () => clearInterval(memorizeIntervalRef.current);
+  }, [phase, dispatch]);
+
+  // track guess elapsed time during input phase
+  useEffect(() => {
+    clearInterval(guessIntervalRef.current);
+    if (phase === 'input') {
+      guessIntervalRef.current = setInterval(() => {
+        dispatch(tickGuessElapsed());
+      }, 1000);
+    }
+    return () => clearInterval(guessIntervalRef.current);
+  }, [phase, dispatch]);
 
   // autofocus input when entering input phase
   useEffect(() => {
@@ -138,6 +164,12 @@ const PairNumberGame = () => {
     dispatch(reset());
   };
 
+  // Animated dots that cycle based on elapsed time (but don't show the time)
+  const getDots = (elapsed) => {
+    const count = (elapsed % 4) + 1; // cycles 1,2,3,4,1,2,3,4...
+    return '.'.repeat(count);
+  };
+
   return (
     <Paper id="remember-game" elevation={2} sx={{ p: 3, mt: { xs: 2, md: 0 }, width: { xs: '100%', md: 520 }, flex: '0 0 520px' }}>
       <Stack spacing={2} sx={{ alignItems: 'stretch' }}>
@@ -163,6 +195,7 @@ const PairNumberGame = () => {
               {timerRemaining > 0 && (
                 <Typography variant="subtitle1" color="primary" sx={{ mt: 1 }} aria-live="polite">Time left: <strong>{timerRemaining}s</strong></Typography>
               )}
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, minHeight: '1.5em' }}>{getDots(memorizeElapsed)}</Typography>
             </>
           ) : null}
         </Box>
@@ -184,6 +217,7 @@ const PairNumberGame = () => {
                 ) : null
               }}
             />
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, minHeight: '1.5em' }}>{getDots(guessElapsed)}</Typography>
           </Box>
         )} 
 

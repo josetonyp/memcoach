@@ -5,7 +5,7 @@ import { clearHistory } from '../store/gameSlice';
 
 // simple CSV exporter (flatten games -> attempts)
 const exportCsv = (games, filename = 'memory-history.csv') => {
-  const header = ['gameId', 'gameStart', 'attemptDate', 'pairs', 'provided', 'correct', 'total', 'percent', 'pairsCount', 'memorizeTime'];
+  const header = ['gameId', 'gameStart', 'attemptDate', 'pairs', 'provided', 'correct', 'total', 'percent', 'pairsCount', 'memorizeTime', 'memorizeElapsed', 'guessElapsed'];
   const csv = [header.join(',')];
   games.forEach((g) => {
     (g.attempts || []).forEach((a) => {
@@ -20,6 +20,8 @@ const exportCsv = (games, filename = 'memory-history.csv') => {
         a.percent,
         g.pairsCount,
         g.memorizeTime,
+        a.memorizeElapsed || 0,
+        a.guessElapsed || 0,
       ];
       csv.push(line.join(','));
     });
@@ -157,6 +159,11 @@ const HistoryPage = () => {
                               return <Box key={i} sx={{ width: 10, height: 10, bgcolor: ok ? 'success.main' : 'error.main', borderRadius: 0.5 }} />;
                             })}
                           </Stack>
+                          {(a.memorizeElapsed != null || a.guessElapsed != null) && (
+                            <Typography variant="caption" color="text.secondary" sx={{ ml: 1, whiteSpace: 'nowrap' }}>
+                              M: {a.memorizeElapsed || 0}s | G: {a.guessElapsed || 0}s
+                            </Typography>
+                          )}
                         </Stack>
                       </Paper>
                     ))}

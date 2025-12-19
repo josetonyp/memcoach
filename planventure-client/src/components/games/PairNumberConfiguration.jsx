@@ -1,17 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Paper, TextField, FormControlLabel, Switch, IconButton, Collapse } from '@mui/material';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useSelector, useDispatch } from 'react-redux';
-import { setPairsCount, setMemorizeTime, setTimerEnabled } from '../../store/gameSlice';
+import { setPairsCount, setMemorizeTime, setTimerEnabled, reset } from '../../store/gameSlice';
 
 const PairNumberConfiguration = () => {
+  
+
   const [open, setOpen] = useState(false);
   const dispatch = useDispatch();
   const pairsCount = useSelector((s) => s.game.pairsCount);
   const memorizeTime = useSelector((s) => s.game.memorizeTime);
   const timerEnabled = useSelector((s) => s.game.timerEnabled);
   const phase = useSelector((s) => s.game.phase);
+
+  console.log('Rendering PairNumberConfiguration');
+  console.log({ pairsCount, memorizeTime, timerEnabled, phase });
+
+  // track previous config values to detect changes
+  const prevConfig = useRef({ pairsCount, memorizeTime, timerEnabled });
+
+  // reset game when config changes during active gameplay
+  useEffect(() => {
+    const prev = prevConfig.current;
+    const configChanged =
+      prev.pairsCount !== pairsCount ||
+      prev.memorizeTime !== memorizeTime ||
+      prev.timerEnabled !== timerEnabled;
+
+    if (configChanged && (phase === 'showing' || phase === 'input')) {
+      dispatch(reset());
+    }
+
+    // update ref for next comparison
+    prevConfig.current = { pairsCount, memorizeTime, timerEnabled };
+  }, [pairsCount, memorizeTime, timerEnabled, phase, dispatch]);
 
   return (
     <Paper id="remember-config" elevation={2} sx={{ position: 'relative', p: 3, mt: 2, width: { xs: 300 }, flex: '0 0 300px' }}>

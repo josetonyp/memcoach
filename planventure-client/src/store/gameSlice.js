@@ -1,10 +1,25 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+// Load configuration from localStorage with fallback defaults
+const loadConfig = () => {
+  const pairsCount = localStorage.getItem("memoryGame_pairsCount");
+  const memorizeTime = localStorage.getItem("memoryGame_memorizeTime");
+  const timerEnabled = localStorage.getItem("memoryGame_timerEnabled");
+
+  return {
+    pairsCount: pairsCount ? Number(pairsCount) : 5,
+    memorizeTime: memorizeTime ? Number(memorizeTime) : 8,
+    timerEnabled: timerEnabled ? timerEnabled === "true" : true,
+  };
+};
+
+const config = loadConfig();
+
 const initialState = {
   pairs: [],
-  pairsCount: 5,
-  memorizeTime: 8,
-  timerEnabled: true,
+  pairsCount: config.pairsCount,
+  memorizeTime: config.memorizeTime,
+  timerEnabled: config.timerEnabled,
   timerRemaining: 0,
   phase: "ready", // ready | showing | input | result
   inputValue: "",
@@ -15,6 +30,9 @@ const initialState = {
   history: [],
   // track the current live game id when a round is started
   currentGameId: null,
+  // elapsed timers
+  memorizeElapsed: 0, // seconds from Start to Verify
+  guessElapsed: 0, // seconds from Verify to successful validation or Cancel
 };
 
 const gameSlice = createSlice({
@@ -23,12 +41,15 @@ const gameSlice = createSlice({
   reducers: {
     setPairsCount(state, action) {
       state.pairsCount = action.payload;
+      localStorage.setItem("memoryGame_pairsCount", String(action.payload));
     },
     setMemorizeTime(state, action) {
       state.memorizeTime = action.payload;
+      localStorage.setItem("memoryGame_memorizeTime", String(action.payload));
     },
     setTimerEnabled(state, action) {
       state.timerEnabled = !!action.payload;
+      localStorage.setItem("memoryGame_timerEnabled", String(!!action.payload));
     },
     setInputValue(state, action) {
       state.inputValue = action.payload;
@@ -45,6 +66,8 @@ const gameSlice = createSlice({
       state.timerRemaining = state.timerEnabled ? state.memorizeTime : 0;
       state.inputValue = "";
       state.result = null;
+      state.memorizeElapsed = 0;
+      state.guessElapsed = 0;
 
       // create a new game entry and set it as current
       const gameId = Date.now();
@@ -74,6 +97,7 @@ const gameSlice = createSlice({
       state.showing = false;
       state.phase = "input";
       state.timerRemaining = 0;
+      state.guessElapsed = 0;
     },
     verifyInput(state, action) {
       // payload: { cleaned }
@@ -115,6 +139,8 @@ const gameSlice = createSlice({
         correct,
         total,
         percent,
+        memorizeElapsed: state.memorizeElapsed,
+        guessElapsed: state.guessElapsed,
       };
 
       let gIndex = -1;
@@ -171,9 +197,18 @@ const gameSlice = createSlice({
       state.pairs = [];
       state.showing = false;
       state.currentGameId = null;
+      state.memorizeElapsed = 0;
+      state.guessElapsed = 0;
     },
     setHighScore(state, action) {
       state.highScore = action.payload;
+    },
+
+    tickMemorizeElapsed(state) {
+      state.memorizeElapsed += 1;
+    },
+    tickGuessElapsed(state) {
+      state.guessElapsed += 1;
     },
 
     // record an attempt to history without changing phase/result (useful for failed guesses)
@@ -287,6 +322,8 @@ export const {
   verifyInput,
   reset,
   setHighScore,
+  tickMemorizeElapsed,
+  tickGuessElapsed,
   recordAttempt,
   clearHistory,
 } = gameSlice.actions;

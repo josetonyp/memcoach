@@ -18,7 +18,7 @@ const Navbar = () => {
           variant="h6" 
           component="div" 
           sx={{ flexGrow: 1, cursor: 'pointer', textAlign: 'left' }}
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/game')}
         >
           Memory Coach
         </Typography>
