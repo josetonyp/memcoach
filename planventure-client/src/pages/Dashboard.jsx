@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Grid, Paper, Button } from '@mui/material';
+import { Box, Typography, Grid, Paper, Button, Stack } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import TripList from '../components/trips/TripList';
 import { useAuth } from '../context/AuthContext';
@@ -37,14 +37,23 @@ const navigate = useNavigate();
       <Typography variant="body1" color="text.secondary" sx={{ maxWidth: '600px', mb: 3 }}>
         Ready to start planning your next adventure? Create your first trip and let us help you organize everything from destinations to activities.
       </Typography>
-      <Button
-        variant="contained"
-        size="large"
-        startIcon={<AddIcon />}
-        onClick={() => navigate('/trips/new')}
-      >
-        Plan Your First Trip
-      </Button>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+        <Button
+          variant="contained"
+          size="large"
+          startIcon={<AddIcon />}
+          onClick={() => navigate('/trips/new')}
+        >
+          Plan Your First Trip
+        </Button>
+        <Button
+          variant="outlined"
+          size="large"
+          onClick={() => navigate('/game')}
+        >
+          Play Memory Game
+        </Button>
+      </Stack>
     </Box>
   );
 

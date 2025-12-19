@@ -6,11 +6,13 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import NewTripPage from '../pages/NewTripPage';
 import TripDetailsPage from '../pages/TripDetailsPage';
 import EditTripPage from '../pages/EditTripPage';
+import MemoryGamePage from '../pages/MemoryGamePage';
+import HistoryPage from '../pages/HistoryPage';
 
 export const publicRoutes = [
   {
     path: '/',
-    element: <Home />,
+    element: <MemoryGamePage />,
   },
   {
     path: '/login',
@@ -19,6 +21,14 @@ export const publicRoutes = [
   {
     path: '/signup',
     element: <SignUpPage />,
+  },
+  {
+    path: '/game',
+    element: <MemoryGamePage />,
+  },
+  {
+    path: '/history',
+    element: <HistoryPage />,
   }
 ];
 
@@ -42,5 +52,6 @@ export const protectedRoutes = [
   {
     path: '/trips/:tripId/edit',
     element: <DashboardLayout><EditTripPage /></DashboardLayout>,
-  }
+  },
+  
 ];

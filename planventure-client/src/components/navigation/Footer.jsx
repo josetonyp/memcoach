@@ -24,13 +24,8 @@ const Footer = () => {
           alignItems="center"
         >
           <Typography variant="body2" color="text.secondary">
-            © {new Date().getFullYear()} Planventure.
+            © {new Date().getFullYear()} Memory Coach.
           </Typography>
-          <Stack direction="row" spacing={3}>
-            <Link href="https://gh.io/gfb-copilot" alt="GitHub Copilot" target="_blank" color="text.secondary" underline="hover">
-            Built with GitHub Copilot 🤖
-            </Link>
-          </Stack>
         </Stack>
       </Container>
     </Box>

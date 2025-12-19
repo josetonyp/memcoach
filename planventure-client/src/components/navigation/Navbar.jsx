@@ -20,7 +20,7 @@ const Navbar = () => {
           sx={{ flexGrow: 1, cursor: 'pointer', textAlign: 'left' }}
           onClick={() => navigate('/')}
         >
-          Planventure
+          Memory Coach
         </Typography>
         <Stack direction="row" spacing={2}>
           {isAuthenticated ? (
@@ -30,6 +30,18 @@ const Navbar = () => {
                 onClick={() => navigate('/trips')}
               >
                 My Trips
+              </Button>
+              <Button 
+                color="inherit" 
+                onClick={() => navigate('/game')}
+              >
+                Memory Game
+              </Button>
+              <Button
+                color="inherit"
+                onClick={() => navigate('/history')}
+              >
+                History
               </Button>
               <Button 
                 color="inherit" 
@@ -47,8 +59,12 @@ const Navbar = () => {
                 onClick={() => navigate('/login')}
               >
                 Login
-              </Button>
-              <Button 
+              </Button>              <Button
+                color="inherit"
+                onClick={() => navigate('/history')}
+              >
+                History
+              </Button>              <Button 
                 color="inherit" 
                 variant="outlined" 
                 onClick={() => navigate('/signup')}

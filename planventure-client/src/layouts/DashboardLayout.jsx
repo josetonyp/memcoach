@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { 
   Box, 
   Drawer, 
@@ -19,7 +20,8 @@ import {
   Map as MapIcon,
   ListAlt as ListAltIcon,
   Settings as SettingsIcon,
-  ChevronLeft as ChevronLeftIcon
+  ChevronLeft as ChevronLeftIcon,
+  History as HistoryIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/navigation/Navbar';
@@ -30,6 +32,7 @@ const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
   { text: 'My Trips', icon: <MapIcon />, path: '/trips' },
   { text: 'Trip Planner', icon: <ListAltIcon />, path: '/planner' },
+  { text: 'History', icon: <HistoryIcon />, path: '/history' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
 
@@ -39,6 +42,28 @@ const DashboardLayout = ({ children }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const location = useLocation();
+  // read recent history for sidebar
+  const historyRaw = useSelector((s) => s.game.history || []);
+  const history = historyRaw.map((h) => {
+    if (h && Array.isArray(h.attempts)) return h;
+    const attempt = {
+      id: h.id || Date.now(),
+      date: h.date || new Date().toISOString(),
+      provided: h.provided || [],
+      correct: h.correct || 0,
+      total: h.total || (Array.isArray(h.provided) ? h.provided.length : 0),
+      percent: h.percent || 0,
+    };
+    return {
+      id: h.id || Date.now(),
+      startDate: h.date || new Date().toISOString(),
+      pairs: h.pairs || [],
+      attempts: [attempt],
+      pairsCount: h.pairsCount,
+      memorizeTime: h.memorizeTime,
+      completed: (h.percent === 100),
+    };
+  });
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -53,7 +78,7 @@ const DashboardLayout = ({ children }) => {
         p: 2
       }}>
         <Typography variant="h6" component="div">
-          Planventure
+          Memory Coach
         </Typography>
         {isMobile && (
           <IconButton onClick={handleDrawerToggle}>
@@ -89,6 +114,32 @@ const DashboardLayout = ({ children }) => {
           </ListItemButton>
         ))}
       </List>
+
+      <Divider sx={{ mt: 1 }} />
+
+      {/* Recent small history preview */}
+      <Box sx={{ p: 1 }}>
+        <Typography variant="subtitle2" sx={{ px: 1, pt: 1 }}>Recent games</Typography>
+        <List>
+          {history.slice(0, 6).map((h) => {
+            const last = (h.attempts || [])[0] || null;
+            return (
+            <ListItemButton
+              key={h.id}
+              onClick={() => {
+                navigate('/history');
+                if (isMobile) handleDrawerToggle();
+              }}
+              sx={{ py: 0.5 }}
+            >
+              <ListItemIcon sx={{ minWidth: 36 }}>
+                <Box sx={{ width: 12, height: 12, bgcolor: last && last.correct === last.total ? 'success.main' : 'error.main', borderRadius: 0.5 }} />
+              </ListItemIcon>
+              <ListItemText primary={`${last ? `${last.correct}/${last.total}` : '-'} — ${h.pairs.join(' ')}`} primaryTypographyProps={{ noWrap: true }} />
+            </ListItemButton>
+          )})}
+        </List>
+      </Box>
     </Box>
   );
 
