@@ -1,0 +1,4 @@
+Host github.com
+  AddKeysToAgent yes
+  UseKeychain yes
+  IdentityFile ~/.ssh/id_ed_2026_josetonyp_github
