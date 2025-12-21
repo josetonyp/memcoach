@@ -6,7 +6,7 @@
   "homepage": "https://josetonyp.github.io/memcoach/",
   "scripts": {
     "predeploy": "npm run build",
-    "deploy": "npm run build; git add -A; git commit -m 'Deploying'",
+    "deploy": "npm run build; git add -A; git commit -m 'Deploying'; git push",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
