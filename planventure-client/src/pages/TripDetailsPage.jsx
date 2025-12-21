@@ -51,8 +51,7 @@ const TripDetailsPage = () => {
       try {
         setLoading(true);
         const response = await tripService.getTrip(tripId);
-        console.log('TripDetailsPage received:', response);
-
+    
         if (!response || !response.trip) {
           throw new Error('Trip not found');
         }

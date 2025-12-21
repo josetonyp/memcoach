@@ -181,3 +181,7 @@ cython_debug/
 
 .pypirc
 .github
+
+planventure-client/node_modules
+planventure-client/docs
+planventure-client/build

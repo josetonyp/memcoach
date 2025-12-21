@@ -93,7 +93,7 @@ const SignupForm = () => {
       };
 
       const response = await api.auth.register(userData);
-      console.log('Signup response:', response); // Debug log
+      
       
       // Don't check for accessToken, just redirect after successful registration
       navigate('/login', { 

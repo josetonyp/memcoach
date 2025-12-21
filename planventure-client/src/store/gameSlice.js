@@ -30,9 +30,9 @@ const initialState = {
   history: [],
   // track the current live game id when a round is started
   currentGameId: null,
-  // elapsed timers
-  memorizeElapsed: 0, // seconds from Start to Verify
-  guessElapsed: 0, // seconds from Verify to successful validation or Cancel
+  // elapsed timers in milliseconds
+  memorizeElapsed: 0, // milliseconds from Start to Verify
+  guessElapsed: 0, // milliseconds from Verify to successful validation or Cancel
 };
 
 const gameSlice = createSlice({
@@ -205,10 +205,10 @@ const gameSlice = createSlice({
     },
 
     tickMemorizeElapsed(state) {
-      state.memorizeElapsed += 1;
+      state.memorizeElapsed += 100;
     },
     tickGuessElapsed(state) {
-      state.guessElapsed += 1;
+      state.guessElapsed += 100;
     },
 
     // record an attempt to history without changing phase/result (useful for failed guesses)

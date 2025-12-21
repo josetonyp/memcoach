@@ -22,7 +22,6 @@ const TripList = ({ WelcomeMessage, ErrorState }) => {
       try {
         setLoading(true);
         const data = await tripService.getAllTrips();
-        console.log('TripList received data:', data); // Debug log
         
         if (!data || !data.trips) {
           console.error('Invalid data format:', data);

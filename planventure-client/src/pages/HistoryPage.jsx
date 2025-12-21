@@ -3,6 +3,13 @@ import { Box, Typography, TextField, Button, Stack, Paper, Chip, Tooltip, IconBu
 import { useSelector, useDispatch } from 'react-redux';
 import { clearHistory } from '../store/gameSlice';
 
+// Format milliseconds as seconds with decimal places (e.g., 5234 -> "5.234s")
+const formatTime = (ms) => {
+  if (ms == null) return '0.000s';
+  const seconds = (ms / 1000).toFixed(3);
+  return `${seconds}s`;
+};
+
 // simple CSV exporter (flatten games -> attempts)
 const exportCsv = (games, filename = 'memory-history.csv') => {
   const header = ['gameId', 'gameStart', 'attemptDate', 'pairs', 'provided', 'correct', 'total', 'percent', 'pairsCount', 'memorizeTime', 'memorizeElapsed', 'guessElapsed'];
@@ -161,7 +168,7 @@ const HistoryPage = () => {
                           </Stack>
                           {(a.memorizeElapsed != null || a.guessElapsed != null) && (
                             <Typography variant="caption" color="text.secondary" sx={{ ml: 1, whiteSpace: 'nowrap' }}>
-                              M: {a.memorizeElapsed || 0}s | G: {a.guessElapsed || 0}s
+                              M: {formatTime(a.memorizeElapsed)} | G: {formatTime(a.guessElapsed)}
                             </Typography>
                           )}
                         </Stack>

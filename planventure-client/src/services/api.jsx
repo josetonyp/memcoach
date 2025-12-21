@@ -24,7 +24,7 @@ const handleResponse = async (response) => {
     throw new Error(data.error || data.message || 'Request failed');
   }
 
-  console.log('API Response:', data); // Debug log
+  
   return data;
 };
 

@@ -75,7 +75,7 @@ const PairNumberGame = () => {
     if (phase === 'showing') {
       memorizeIntervalRef.current = setInterval(() => {
         dispatch(tickMemorizeElapsed());
-      }, 1000);
+      }, 100);
     }
     return () => clearInterval(memorizeIntervalRef.current);
   }, [phase, dispatch]);
@@ -86,7 +86,7 @@ const PairNumberGame = () => {
     if (phase === 'input') {
       guessIntervalRef.current = setInterval(() => {
         dispatch(tickGuessElapsed());
-      }, 1000);
+      }, 100);
     }
     return () => clearInterval(guessIntervalRef.current);
   }, [phase, dispatch]);
