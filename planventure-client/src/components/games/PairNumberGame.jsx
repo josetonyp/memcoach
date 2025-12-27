@@ -4,29 +4,13 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import { useSelector, useDispatch } from 'react-redux';
 import { tick, hideNow, verifyInput, reset, setInputValue, startRound, recordAttempt, tickMemorizeElapsed, tickGuessElapsed } from '../../store/gameSlice';
-
-const generatePairs = (count = 5) => {
-  const pairs = [];
-  for (let i = 0; i < count; i++) {
-    const n = Math.floor(Math.random() * 100); // 0-99 inclusive
-    pairs.push(String(n).padStart(2, '0')); // two-digit numbers 00-99
-  }
-  return pairs;
-};
-
-// Helper to split pairs into lines of `size` (default 5)
-const chunkPairs = (pairs, size = 5) => {
-  const lines = [];
-  for (let i = 0; i < pairs.length; i += size) {
-    lines.push(pairs.slice(i, i + size));
-  }
-  return lines;
-};
+import { generatePairs } from '../../libs/games/pairNumber/pairsGenerator';
 
 const PairNumberGame = () => {
   const dispatch = useDispatch();
   const pairs = useSelector((s) => s.game.pairs);
   const pairsCount = useSelector((s) => s.game.pairsCount);
+  const chunkPairs = useSelector((s) => s.game.chunkPairs);
   const memorizeTime = useSelector((s) => s.game.memorizeTime);
   const timerRemaining = useSelector((s) => s.game.timerRemaining);
   const phase = useSelector((s) => s.game.phase);
@@ -157,7 +141,13 @@ const PairNumberGame = () => {
     const formatted = formatPairsInput(e.target.value);
     dispatch(setInputValue(formatted));
   };  
-
+  const handleStart = () => {
+    var genedPairs = generatePairs(pairsCount)
+    pairs = genedPairs.pairs
+    chunkPairs = genedPairs.chunkPairs
+    pairsCount = genedPairs.count
+    dispatch(startRound({ pairs: pairs }));
+  };
   const handleReset = () => {
     clearInterval(intervalRef.current);
     clearTimeout(timeoutRef.current);
@@ -179,7 +169,7 @@ const PairNumberGame = () => {
           {phase === 'showing' ? (
             <>
               {/* Render pairs in lines of 5 for readability */}
-              {chunkPairs(pairs, 5).map((line, idx) => (
+              {chunkPairs.map((line, idx) => (
                 <Typography
                   key={idx}
                   sx={{
@@ -223,7 +213,7 @@ const PairNumberGame = () => {
 
         <Stack direction="row" spacing={2}>
           {phase === 'ready' && (
-            <Button variant="contained" onClick={() => dispatch(startRound({ pairs: generatePairs(pairsCount) }))}>Start</Button>
+            <Button variant="contained" onClick={handleStart}>Start</Button>
           )}
 
           {phase === 'showing' && (

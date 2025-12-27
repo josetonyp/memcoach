@@ -60,12 +60,13 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <Button 
+
+              {/* <Button 
                 color="inherit" 
                 onClick={() => navigate('/login')}
               >
                 Login
-              </Button>
+              </Button> */}
               <Button
                 color="inherit"
                 onClick={() => navigate('/gallery')}
@@ -78,14 +79,14 @@ const Navbar = () => {
               >
                 History
               </Button>
-              <Button 
+              {/* <Button 
                 color="inherit" 
                 variant="outlined" 
                 onClick={() => navigate('/signup')}
                 sx={{ borderColor: 'inherit' }}
               >
                 Sign Up
-              </Button>
+              </Button> */}
             </>
           )}
         </Stack>
