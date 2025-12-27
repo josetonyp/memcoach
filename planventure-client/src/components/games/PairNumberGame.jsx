@@ -3,14 +3,14 @@ import { Box, Typography, Button, Stack, TextField, Paper, InputAdornment } from
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import { useSelector, useDispatch } from 'react-redux';
-import { tick, hideNow, verifyInput, reset, setInputValue, startRound, recordAttempt, tickMemorizeElapsed, tickGuessElapsed } from '../../store/gameSlice';
+import { tick, hideNow, verifyInput, reset, setInputValue, startRound, recordAttempt, tickMemorizeElapsed, tickGuessElapsed, setPairs, setPairsCount } from '../../store/gameSlice';
 import { generatePairs } from '../../libs/games/pairNumber/pairsGenerator';
 
 const PairNumberGame = () => {
   const dispatch = useDispatch();
   const pairs = useSelector((s) => s.game.pairs);
   const pairsCount = useSelector((s) => s.game.pairsCount);
-  const chunkPairs = useSelector((s) => s.game.chunkPairs);
+  const chunkedPairs = useSelector((s) => s.game.chunkedPairs);
   const memorizeTime = useSelector((s) => s.game.memorizeTime);
   const timerRemaining = useSelector((s) => s.game.timerRemaining);
   const phase = useSelector((s) => s.game.phase);
@@ -143,10 +143,7 @@ const PairNumberGame = () => {
   };  
   const handleStart = () => {
     var genedPairs = generatePairs(pairsCount)
-    pairs = genedPairs.pairs
-    chunkPairs = genedPairs.chunkPairs
-    pairsCount = genedPairs.count
-    dispatch(startRound({ pairs: pairs }));
+    dispatch(startRound({ pairs: genedPairs.pairs, pairsCount: genedPairs.count, chunkedPairs: genedPairs.chunkedPairs }));
   };
   const handleReset = () => {
     clearInterval(intervalRef.current);
@@ -169,7 +166,7 @@ const PairNumberGame = () => {
           {phase === 'showing' ? (
             <>
               {/* Render pairs in lines of 5 for readability */}
-              {chunkPairs.map((line, idx) => (
+              {chunkedPairs.map((line, idx) => (
                 <Typography
                   key={idx}
                   sx={{
@@ -228,7 +225,7 @@ const PairNumberGame = () => {
 
           {phase === 'result' && (
             <>
-              <Button variant="contained" onClick={() => dispatch(startRound({ pairs: generatePairs(pairsCount) }))}>Play Again</Button>
+              <Button variant="contained" onClick={handleStart}>Play Again</Button>
               <Button variant="outlined" onClick={handleReset}>Back</Button>
             </>
           )}

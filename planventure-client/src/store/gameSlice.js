@@ -18,6 +18,7 @@ const config = loadConfig();
 const initialState = {
   pairs: [],
   pairsCount: config.pairsCount,
+  chunkedPairs: [],
   memorizeTime: config.memorizeTime,
   timerEnabled: config.timerEnabled,
   timerRemaining: 0,
@@ -60,6 +61,7 @@ const gameSlice = createSlice({
     startRound(state, action) {
       // payload: { pairs }
       state.pairs = action.payload.pairs;
+      state.chunkedPairs = action.payload.chunkedPairs;
       state.phase = "showing";
       state.showing = true;
       // respect timerEnabled: if disabled, keep timerRemaining at 0 until user hides
@@ -195,6 +197,8 @@ const gameSlice = createSlice({
       state.result = null;
       state.timerRemaining = 0;
       state.pairs = [];
+      state.pairsCount = config.pairsCount;
+      state.chunckedPairs = [];
       state.showing = false;
       state.currentGameId = null;
       state.memorizeElapsed = 0;

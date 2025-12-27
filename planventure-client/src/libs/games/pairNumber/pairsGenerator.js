@@ -30,13 +30,13 @@ const chunkPairs = (pairsArray, size = 5) => {
  * Generate and organize random number pairs for the memory game
  * @param {number} count - Number of pairs to generate (default 5)
  * @param {number} chunkSize - Number of pairs per line (default 5)
+ * @params {array} chunkPairs - Array of arrays, each containing up to `chunkSize` pairs
  * @returns {{pairs: string[][], count: number}} Object containing chunked pairs and total count
  */
 export const generatePairs = (count = 5, chunkSize = 5) => {
   const generatedPairs = pairs(count);
   return {
     pairs: generatedPairs,
-    chunkPairs: chunkPairs(generatedPairs, chunkSize),
-    count: generatedPairs.length,
+    chunkedPairs: chunkPairs(generatedPairs, chunkSize),
   };
 };
