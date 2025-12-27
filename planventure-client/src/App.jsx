@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import MainLayout from './layouts/MainLayout';
@@ -24,7 +24,7 @@ function RouteResetHandler() {
 function App() {
   return (
     <AuthProvider>
-      <Router basename="/memcoach">
+      <Router>
         <RouteResetHandler />
         <MainLayout>
           <Routes>
