@@ -100,14 +100,13 @@ const WordsGame = () => {
     return () => clearInterval(guessIntervalRef.current);
   }, [phase, dispatch]);
 
-  // Reset entered words when entering input phase
+  // Reset entered words when entering input phase and start with first word in edit mode
   useEffect(() => {
     if (phase === 'input') {
       setCurrentWordIndex(0);
-      setEnteredWords([]);
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
+      setEnteredWords(['']); // Start with one empty word
+      setEditingIndex(0); // Set first word to edit mode
+      setEditingValue('');
     }
   }, [phase]);
 
@@ -129,33 +128,29 @@ const WordsGame = () => {
     setEnteredWords([]);
   };
 
-  const handleInputChange = (e) => {
-    dispatch(setWordsInputValue(e.target.value));
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && wordsInputValue.trim()) {
-      e.preventDefault();
-      const newWords = [...enteredWords, wordsInputValue.trim()];
-      setEnteredWords(newWords);
-      dispatch(setWordsInputValue(''));
-      setCurrentWordIndex(currentWordIndex + 1);
-    }
-  };
-
   const handleEditWord = (index) => {
     setEditingIndex(index);
     setEditingValue(enteredWords[index]);
   };
 
   const handleSaveEdit = () => {
-    if (editingIndex !== null && editingValue.trim()) {
+    if (editingIndex !== null) {
       const newWords = [...enteredWords];
       newWords[editingIndex] = editingValue.trim();
       setEnteredWords(newWords);
+      
+      // If we haven't reached the word limit and current word is not empty, create next word
+      if (newWords.length < words.length && editingValue.trim()) {
+        const nextWords = [...newWords, ''];
+        setEnteredWords(nextWords);
+        setEditingIndex(newWords.length); // Edit the newly created word
+        setEditingValue('');
+        setCurrentWordIndex(newWords.length);
+      } else {
+        setEditingIndex(null);
+        setEditingValue('');
+      }
     }
-    setEditingIndex(null);
-    setEditingValue('');
   };
 
   const handleCancelEdit = () => {
@@ -394,6 +389,7 @@ const WordsGame = () => {
                       onChange={(e) => setEditingValue(e.target.value)}
                       onKeyDown={handleEditKeyDown}
                       onBlur={handleSaveEdit}
+                      placeholder={`Word ${idx + 1}`}
                       sx={{ flexGrow: 1 }}
                     />
                   ) : (
@@ -413,18 +409,6 @@ const WordsGame = () => {
               ))
             )}
           </Box>
-
-          {enteredWords.length < words.length && (
-            <TextField
-              ref={inputRef}
-              fullWidth
-              value={wordsInputValue}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder={`Enter word ${enteredWords.length + 1}...`}
-              sx={{ mb: 2 }}
-            />
-          )}
 
           <Stack direction="row" spacing={2}>
             <Button 
