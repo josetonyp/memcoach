@@ -5,11 +5,17 @@ const loadConfig = () => {
   const pairsCount = localStorage.getItem("memoryGame_pairsCount");
   const memorizeTime = localStorage.getItem("memoryGame_memorizeTime");
   const timerEnabled = localStorage.getItem("memoryGame_timerEnabled");
+  const wordsCount = localStorage.getItem("wordsGame_wordsCount");
+  const wordsColumns = localStorage.getItem("wordsGame_columns");
+  const wordsDictionary = localStorage.getItem("wordsGame_dictionary");
 
   return {
     pairsCount: pairsCount ? Number(pairsCount) : 5,
     memorizeTime: memorizeTime ? Number(memorizeTime) : 8,
     timerEnabled: timerEnabled ? timerEnabled === "true" : true,
+    wordsCount: wordsCount ? Number(wordsCount) : 10,
+    wordsColumns: wordsColumns ? Number(wordsColumns) : 2,
+    wordsDictionary: wordsDictionary || "/words.txt",
   };
 };
 
@@ -34,6 +40,20 @@ const initialState = {
   // elapsed timers in milliseconds
   memorizeElapsed: 0, // milliseconds from Start to Verify
   guessElapsed: 0, // milliseconds from Verify to successful validation or Cancel
+
+  // Words game state
+  words: [],
+  wordsCount: config.wordsCount,
+  wordsColumns: config.wordsColumns,
+  wordsDictionary: config.wordsDictionary,
+  chunkedWords: [],
+  wordsInputValue: "",
+  wordsResult: null,
+  wordsHistory: [],
+  wordsCurrentGameId: null,
+  wordsMemorizeElapsed: 0,
+  wordsGuessElapsed: 0,
+  availableDictionaries: ["/words.txt"],
 };
 
 const gameSlice = createSlice({
@@ -264,6 +284,152 @@ const gameSlice = createSlice({
     clearHistory(state) {
       state.history = [];
     },
+
+    // Words Game Actions
+    setWordsCount(state, action) {
+      state.wordsCount = action.payload;
+      localStorage.setItem("wordsGame_wordsCount", String(action.payload));
+    },
+    setWordsColumns(state, action) {
+      state.wordsColumns = action.payload;
+      localStorage.setItem("wordsGame_columns", String(action.payload));
+    },
+    setWordsDictionary(state, action) {
+      state.wordsDictionary = action.payload;
+      localStorage.setItem("wordsGame_dictionary", action.payload);
+    },
+    setWordsInputValue(state, action) {
+      state.wordsInputValue = action.payload;
+    },
+    setWords(state, action) {
+      state.words = action.payload;
+    },
+    startWordsRound(state, action) {
+      // payload: { words, chunkedWords }
+      state.words = action.payload.words;
+      state.chunkedWords = action.payload.chunkedWords;
+      state.phase = "showing";
+      state.showing = true;
+      state.timerRemaining = state.timerEnabled ? state.memorizeTime : 0;
+      state.wordsInputValue = "";
+      state.wordsResult = null;
+      state.wordsMemorizeElapsed = 0;
+      state.wordsGuessElapsed = 0;
+
+      // create a new game entry
+      const gameId = Date.now();
+      const gameEntry = {
+        id: gameId,
+        startDate: new Date().toISOString(),
+        words: state.words.slice(),
+        attempts: [],
+        wordsCount: state.wordsCount,
+        memorizeTime: state.memorizeTime,
+        completed: false,
+      };
+      state.wordsHistory = [gameEntry, ...(state.wordsHistory || [])].slice(
+        0,
+        100
+      );
+      state.wordsCurrentGameId = gameId;
+    },
+    verifyWordsInput(state, action) {
+      // payload: { cleaned } - array of words entered by user
+      const cleaned = action.payload.cleaned || [];
+      const total = state.words.length;
+      const correct = state.words.reduce(
+        (acc, word, idx) =>
+          acc + (cleaned[idx]?.toLowerCase() === word.toLowerCase() ? 1 : 0),
+        0
+      );
+      const percent = Math.round((correct / total) * 100);
+
+      state.wordsResult = {
+        correct,
+        total,
+        expected: state.words,
+        provided: cleaned,
+        percent,
+      };
+      state.phase = "result";
+
+      // record attempt
+      const attempt = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        provided: Array.isArray(cleaned) ? cleaned.slice() : cleaned || [],
+        correct,
+        total,
+        percent,
+        memorizeElapsed: state.wordsMemorizeElapsed,
+        guessElapsed: state.wordsGuessElapsed,
+      };
+
+      let gIndex = -1;
+      if (state.wordsCurrentGameId) {
+        gIndex = (state.wordsHistory || []).findIndex(
+          (g) => g.id === state.wordsCurrentGameId
+        );
+      }
+      if (gIndex === -1) {
+        const gameId = Date.now() + 1;
+        const gameEntry = {
+          id: gameId,
+          startDate: new Date().toISOString(),
+          words: state.words.slice(),
+          attempts: [attempt],
+          wordsCount: state.wordsCount,
+          memorizeTime: state.memorizeTime,
+          completed: true,
+        };
+        state.wordsHistory = [gameEntry, ...(state.wordsHistory || [])].slice(
+          0,
+          100
+        );
+      } else {
+        const g = state.wordsHistory[gIndex];
+        g.attempts = [attempt, ...(g.attempts || [])].slice(0, 100);
+        g.completed = true;
+        state.wordsHistory[gIndex] = g;
+        state.wordsCurrentGameId = null;
+      }
+    },
+    resetWords(state) {
+      // cleanup incomplete game
+      if (state.wordsCurrentGameId) {
+        const idx = (state.wordsHistory || []).findIndex(
+          (g) => g.id === state.wordsCurrentGameId
+        );
+        if (idx !== -1) {
+          const g = state.wordsHistory[idx];
+          if (!g.attempts || g.attempts.length === 0) {
+            state.wordsHistory = state.wordsHistory.filter(
+              (x) => x.id !== state.wordsCurrentGameId
+            );
+          }
+        }
+      }
+
+      state.phase = "ready";
+      state.wordsInputValue = "";
+      state.wordsResult = null;
+      state.timerRemaining = 0;
+      state.words = [];
+      state.chunkedWords = [];
+      state.showing = false;
+      state.wordsCurrentGameId = null;
+      state.wordsMemorizeElapsed = 0;
+      state.wordsGuessElapsed = 0;
+    },
+    tickWordsMemorizeElapsed(state) {
+      state.wordsMemorizeElapsed += 100;
+    },
+    tickWordsGuessElapsed(state) {
+      state.wordsGuessElapsed += 100;
+    },
+    clearWordsHistory(state) {
+      state.wordsHistory = [];
+    },
   },
   extraReducers: (builder) => {
     // perform a cleanup/migration when rehydrated from storage
@@ -330,6 +496,18 @@ export const {
   tickGuessElapsed,
   recordAttempt,
   clearHistory,
+  // Words game exports
+  setWordsCount,
+  setWordsColumns,
+  setWordsDictionary,
+  setWordsInputValue,
+  setWords,
+  startWordsRound,
+  verifyWordsInput,
+  resetWords,
+  tickWordsMemorizeElapsed,
+  tickWordsGuessElapsed,
+  clearWordsHistory,
 } = gameSlice.actions;
 
 export default gameSlice.reducer;

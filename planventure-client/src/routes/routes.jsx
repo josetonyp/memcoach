@@ -9,6 +9,7 @@ import EditTripPage from '../pages/EditTripPage';
 import MemoryGamePage from '../pages/MemoryGamePage';
 import HistoryPage from '../pages/HistoryPage';
 import NumberGalleryPage from '../pages/NumberGalleryPage';
+import WordsGamePage from '../pages/WordsGamePage';
 
 export const publicRoutes = [
   {
@@ -26,6 +27,10 @@ export const publicRoutes = [
   {
     path: '/game',
     element: <MemoryGamePage />,
+  },
+  {
+    path: '/words',
+    element: <WordsGamePage />,
   },
   {
     path: '/history',

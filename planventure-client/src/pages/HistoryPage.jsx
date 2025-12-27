@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Box, Typography, TextField, Button, Stack, Paper, Chip, Tooltip, IconButton } from '@mui/material';
+import { Box, Typography, TextField, Button, Stack, Paper, Chip, Tooltip, IconButton, ToggleButtonGroup, ToggleButton } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
-import { clearHistory } from '../store/gameSlice';
+import { clearHistory, clearWordsHistory } from '../store/gameSlice';
 
 // Format milliseconds as seconds with decimal places (e.g., 5234 -> "5.234s")
 const formatTime = (ms) => {
@@ -12,20 +12,23 @@ const formatTime = (ms) => {
 
 // simple CSV exporter (flatten games -> attempts)
 const exportCsv = (games, filename = 'memory-history.csv') => {
-  const header = ['gameId', 'gameStart', 'attemptDate', 'pairs', 'provided', 'correct', 'total', 'percent', 'pairsCount', 'memorizeTime', 'memorizeElapsed', 'guessElapsed'];
+  const header = ['gameType', 'gameId', 'gameStart', 'attemptDate', 'items', 'provided', 'correct', 'total', 'percent', 'itemsCount', 'memorizeTime', 'memorizeElapsed', 'guessElapsed'];
   const csv = [header.join(',')];
   games.forEach((g) => {
+    const gameType = g.gameType || 'numbers';
+    const items = gameType === 'words' ? (g.words || []) : (g.pairs || []);
     (g.attempts || []).forEach((a) => {
       const line = [
+        gameType,
         g.id,
         `"${g.startDate}"`,
         `"${a.date}"`,
-        `"${(g.pairs || []).join(' ')}"`,
+        `"${items.join(' ')}"`,
         `"${(a.provided || []).join(' ')}"`,
         a.correct,
         a.total,
         a.percent,
-        g.pairsCount,
+        gameType === 'words' ? g.wordsCount : g.pairsCount,
         g.memorizeTime,
         a.memorizeElapsed || 0,
         a.guessElapsed || 0,
@@ -48,7 +51,9 @@ const exportCsv = (games, filename = 'memory-history.csv') => {
 const matchesQuery = (g, q) => {
   if (!q) return true;
   const s = q.toLowerCase();
-  if ((g.pairs || []).join(' ').toLowerCase().includes(s)) return true;
+  const gameType = g.gameType || 'numbers';
+  const items = gameType === 'words' ? (g.words || []) : (g.pairs || []);
+  if (items.join(' ').toLowerCase().includes(s)) return true;
   if ((g.attempts || []).some(a => (a.provided || []).join(' ').toLowerCase().includes(s))) return true;
   if ((g.startDate || '').toLowerCase().includes(s)) return true;
   return false;
@@ -58,10 +63,12 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const HistoryPage = () => {
   const dispatch = useDispatch();
-  const historyRaw = useSelector((s) => s.game.history || []);
+  const numbersHistoryRaw = useSelector((s) => s.game.history || []);
+  const wordsHistoryRaw = useSelector((s) => s.game.wordsHistory || []);
+  
   // normalize older flat-history entries into game objects
-  const history = historyRaw.map((h) => {
-    if (h && Array.isArray(h.attempts)) return h;
+  const numbersHistory = numbersHistoryRaw.map((h) => {
+    if (h && Array.isArray(h.attempts)) return { ...h, gameType: 'numbers' };
     // legacy flat entry
     const attempt = {
       id: h.id || Date.now(),
@@ -79,57 +86,104 @@ const HistoryPage = () => {
       pairsCount: h.pairsCount,
       memorizeTime: h.memorizeTime,
       completed: (h.percent === 100),
+      gameType: 'numbers',
     };
   });
+  
+  const wordsHistory = wordsHistoryRaw.map((h) => ({ ...h, gameType: 'words' }));
+  
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all'); // all | success | fail
+  const [gameTypeFilter, setGameTypeFilter] = useState('all'); // all | numbers | words
   const [expanded, setExpanded] = useState(null);
 
+  const allHistory = useMemo(() => {
+    const combined = [...numbersHistory, ...wordsHistory];
+    return combined.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+  }, [numbersHistory, wordsHistory]);
+
   const filtered = useMemo(() => {
-    return history.filter((g) => {
+    return allHistory.filter((g) => {
+      if (gameTypeFilter !== 'all' && g.gameType !== gameTypeFilter) return false;
       const hasSuccess = (g.attempts || []).some(a => a.correct === a.total);
       if (filter === 'success' && !hasSuccess) return false;
       if (filter === 'fail' && hasSuccess) return false;
       return matchesQuery(g, query);
     });
-  }, [history, query, filter]);
+  }, [allHistory, query, filter, gameTypeFilter]);
 
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4">Memory History</Typography>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2, mb: 2 }}>
-        <TextField label="Search pairs / provided / date" value={query} onChange={(e) => setQuery(e.target.value)} fullWidth />
-        <TextField select value={filter} onChange={(e) => setFilter(e.target.value)} SelectProps={{ native: true }} sx={{ width: 160 }}>
-          <option value="all">All</option>
-          <option value="success">Success</option>
-          <option value="fail">Fail</option>
-        </TextField>
-        <Button variant="outlined" onClick={() => exportCsv(filtered)}>Export CSV</Button>
-        <Button variant="outlined" color="error" onClick={() => dispatch(clearHistory())}>Clear</Button>
-      </Stack>
+      <Box sx={{ mt: 2, mb: 2 }}>
+        <ToggleButtonGroup
+          value={gameTypeFilter}
+          exclusive
+          onChange={(e, val) => val && setGameTypeFilter(val)}
+          size="small"
+          sx={{ mb: 2 }}
+        >
+          <ToggleButton value="all">All Games</ToggleButton>
+          <ToggleButton value="numbers">Numbers</ToggleButton>
+          <ToggleButton value="words">Words</ToggleButton>
+        </ToggleButtonGroup>
+        
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          <TextField label="Search items / provided / date" value={query} onChange={(e) => setQuery(e.target.value)} fullWidth />
+          <TextField select value={filter} onChange={(e) => setFilter(e.target.value)} SelectProps={{ native: true }} sx={{ width: 160 }}>
+            <option value="all">All</option>
+            <option value="success">Success</option>
+            <option value="fail">Fail</option>
+          </TextField>
+          <Button variant="outlined" onClick={() => exportCsv(filtered)}>Export CSV</Button>
+          <Button 
+            variant="outlined" 
+            color="error" 
+            onClick={() => {
+              if (gameTypeFilter === 'words' || gameTypeFilter === 'all') dispatch(clearWordsHistory());
+              if (gameTypeFilter === 'numbers' || gameTypeFilter === 'all') dispatch(clearHistory());
+            }}
+          >
+            Clear
+          </Button>
+        </Stack>
+      </Box>
 
       <Stack spacing={1}>
         {filtered.length === 0 ? (
           <Typography variant="body1">No matching history.</Typography>
         ) : (
           filtered.map((g) => {
+            const gameType = g.gameType || 'numbers';
+            const items = gameType === 'words' ? (g.words || []) : (g.pairs || []);
             const attempts = g.attempts || [];
             const last = attempts[0] || null;
             const bestPercent = attempts.reduce((m, a) => Math.max(m, a.percent || 0), 0);
             const attemptsCount = attempts.length;
-            const perPairSolved = (g.pairs || []).map((p, i) => (attempts.some(a => (a.provided || [])[i] === p)));
+            const perItemSolved = items.map((p, i) => (attempts.some(a => {
+              const provided = (a.provided || [])[i];
+              return gameType === 'words' 
+                ? provided?.toLowerCase() === p.toLowerCase()
+                : provided === p;
+            })));
             return (
               <Paper key={g.id} sx={{ p: 0.5, mb: 0.5 }}>
                 <Stack direction="row" alignItems="center" spacing={1} sx={{ fontSize: '0.85rem' }}>
+                  <Chip 
+                    size="small" 
+                    label={gameType === 'words' ? 'W' : 'N'} 
+                    color={gameType === 'words' ? 'secondary' : 'primary'}
+                    sx={{ minWidth: 32 }}
+                  />
                   <Tooltip title={new Date(g.startDate).toLocaleString()}>
                     <Typography sx={{ width: 160, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{new Date(g.startDate).toLocaleString()}</Typography>
                   </Tooltip>
 
                   <Typography sx={{ fontWeight: 700, color: bestPercent === 100 ? 'success.main' : 'text.primary' }}>{bestPercent}%</Typography>
 
-                  <Tooltip title={g.pairs.join(' ')}>
-                    <Typography sx={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.pairs.join(' ')}</Typography>
+                  <Tooltip title={items.join(' ')}>
+                    <Typography sx={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{items.join(' ')}</Typography>
                   </Tooltip>
 
                   <Typography sx={{ ml: 1, color: 'text.secondary', minWidth: 54 }}>{attemptsCount} attempt{attemptsCount !== 1 ? 's' : ''}</Typography>
@@ -137,10 +191,10 @@ const HistoryPage = () => {
                 <IconButton size="small" onClick={() => setExpanded(expanded === g.id ? null : g.id)} sx={{ ml: 1 }}>
                   <ExpandMoreIcon sx={{ transform: expanded === g.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms' }} />
                 </IconButton>
-                  {/* compact per-pair aggregated indicators */}
+                  {/* compact per-item aggregated indicators */}
                   <Stack direction="row" spacing={0.4} sx={{ ml: 1 }}>
-                    {perPairSolved.map((ok, i) => (
-                      <Tooltip key={i} title={`Pair ${i + 1}: ${ok ? 'Solved in an attempt' : 'Never solved'}`}>
+                    {perItemSolved.map((ok, i) => (
+                      <Tooltip key={i} title={`${gameType === 'words' ? 'Word' : 'Pair'} ${i + 1}: ${ok ? 'Solved in an attempt' : 'Never solved'}`}>
                         <Box sx={{ width: 12, height: 12, bgcolor: ok ? 'success.main' : 'error.main', borderRadius: 0.5 }} />
                       </Tooltip>
                     ))}
@@ -152,28 +206,35 @@ const HistoryPage = () => {
                 {/* expandable attempts list (visible when expanded) */}
                 {expanded === g.id && attempts.length > 0 && (
                   <Stack spacing={0.5} sx={{ mt: 1 }}>
-                    {attempts.map((a) => (
-                      <Paper key={a.id} sx={{ p: 0.5, backgroundColor: 'background.paper' }}>
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <Typography sx={{ width: 160, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{new Date(a.date).toLocaleString()}</Typography>
-                          <Typography sx={{ fontWeight: 600 }}>{a.correct}/{a.total} ({a.percent}%)</Typography>
-                          <Tooltip title={(a.provided || []).join(' ')}>
-                            <Typography sx={{ ml: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{(a.provided || []).join(' ') || '—'}</Typography>
-                          </Tooltip>
-                          <Stack direction="row" spacing={0.4} sx={{ ml: 1 }}>
-                            {(g.pairs || []).map((p, i) => {
-                              const ok = (a.provided || [])[i] === p;
-                              return <Box key={i} sx={{ width: 10, height: 10, bgcolor: ok ? 'success.main' : 'error.main', borderRadius: 0.5 }} />;
-                            })}
+                    {attempts.map((a) => {
+                      const gameType = g.gameType || 'numbers';
+                      const items = gameType === 'words' ? (g.words || []) : (g.pairs || []);
+                      return (
+                        <Paper key={a.id} sx={{ p: 0.5, backgroundColor: 'background.paper' }}>
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <Typography sx={{ width: 160, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{new Date(a.date).toLocaleString()}</Typography>
+                            <Typography sx={{ fontWeight: 600 }}>{a.correct}/{a.total} ({a.percent}%)</Typography>
+                            <Tooltip title={(a.provided || []).join(' ')}>
+                              <Typography sx={{ ml: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{(a.provided || []).join(' ') || '—'}</Typography>
+                            </Tooltip>
+                            <Stack direction="row" spacing={0.4} sx={{ ml: 1 }}>
+                              {items.map((p, i) => {
+                                const provided = (a.provided || [])[i];
+                                const ok = gameType === 'words'
+                                  ? provided?.toLowerCase() === p.toLowerCase()
+                                  : provided === p;
+                                return <Box key={i} sx={{ width: 10, height: 10, bgcolor: ok ? 'success.main' : 'error.main', borderRadius: 0.5 }} />;
+                              })}
+                            </Stack>
+                            {(a.memorizeElapsed != null || a.guessElapsed != null) && (
+                              <Typography variant="caption" color="text.secondary" sx={{ ml: 1, whiteSpace: 'nowrap' }}>
+                                M: {formatTime(a.memorizeElapsed)} | G: {formatTime(a.guessElapsed)}
+                              </Typography>
+                            )}
                           </Stack>
-                          {(a.memorizeElapsed != null || a.guessElapsed != null) && (
-                            <Typography variant="caption" color="text.secondary" sx={{ ml: 1, whiteSpace: 'nowrap' }}>
-                              M: {formatTime(a.memorizeElapsed)} | G: {formatTime(a.guessElapsed)}
-                            </Typography>
-                          )}
-                        </Stack>
-                      </Paper>
-                    ))}
+                        </Paper>
+                      );
+                    })}
                   </Stack>
                 )}
               </Paper>
