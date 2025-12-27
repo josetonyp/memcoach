@@ -65,6 +65,9 @@ const WordsConfiguration = () => {
     if (localWordsDictionary) {
       dispatch(setWordsDictionary(localWordsDictionary));
     }
+    // Close the configuration panel and reset the game
+    setOpen(false);
+    dispatch(resetWords());
   };
 
   return (

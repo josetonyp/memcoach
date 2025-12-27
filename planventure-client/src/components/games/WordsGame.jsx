@@ -414,9 +414,9 @@ const WordsGame = () => {
             <Button 
               variant="contained" 
               onClick={handleVerify}
-              disabled={enteredWords.length === 0}
+              disabled={enteredWords.length < words.length || enteredWords.some(w => !w.trim())}
             >
-              Verify ({enteredWords.length} words)
+              Verify ({enteredWords.filter(w => w.trim()).length}/{words.length} words)
             </Button>
             <Button 
               variant="outlined" 

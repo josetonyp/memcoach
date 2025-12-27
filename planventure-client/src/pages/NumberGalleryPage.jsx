@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -9,8 +9,6 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Switch,
-  FormControlLabel,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ImageIcon from '@mui/icons-material/Image';
@@ -33,6 +31,35 @@ const NumberGalleryPage = () => {
     setCurrent(null);
   };
 
+  const handleNext = () => {
+    if (!current) return;
+    const currentIndex = numberGallery.findIndex(n => n.id === current.id);
+    const nextIndex = (currentIndex + 1) % numberGallery.length;
+    setCurrent(numberGallery[nextIndex]);
+  };
+
+  const handlePrevious = () => {
+    if (!current) return;
+    const currentIndex = numberGallery.findIndex(n => n.id === current.id);
+    const previousIndex = (currentIndex - 1 + numberGallery.length) % numberGallery.length;
+    setCurrent(numberGallery[previousIndex]);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (!open) return;
+      
+      if (event.key === 'ArrowRight') {
+        handleNext();
+      } else if (event.key === 'ArrowLeft') {
+        handlePrevious();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, current]);
+
   return (
     <Box sx={{ maxWidth: 1000, mx: 'auto', p: 2 }}>
       <Typography variant="h4" gutterBottom>Number Gallery</Typography>
@@ -54,22 +81,11 @@ const NumberGalleryPage = () => {
           </Grid>
         ))}
       </Grid>
-
+      
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span>Number {current?.id}</span>
+          <span>{current ? current.words.map(o => o.word).join(', ') : ''}</span>
           <Box>
-            <FormControlLabel
-              control={(
-                <Switch
-                  checked={showImage}
-                  onChange={(_, v) => setShowImage(v)}
-                  inputProps={{ 'aria-label': 'toggle image/text view' }}
-                />
-              )}
-              label={showImage ? <><ImageIcon fontSize="small" sx={{ mr: 0.5 }} /> Image</> : <><TextFieldsIcon fontSize="small" sx={{ mr: 0.5 }} /> Text</>}
-              sx={{ mr: 1 }}
-            />
             <IconButton onClick={handleClose} size="small" aria-label="Close dialog">
               <CloseIcon />
             </IconButton>
@@ -79,21 +95,11 @@ const NumberGalleryPage = () => {
         <DialogContent dividers>
           {current && (
             <Box sx={{ textAlign: 'center' }}>
-              {showImage ? (
-                <img
+              <img
                   src={current.image}
-                  alt={current.text || `Image for ${current.id}`}
-                  style={{ maxWidth: '100%', height: 'auto', borderRadius: 4 }}
+                  alt={current.words[0].memory || current.words[0].word}
+                  style={{ height: '300px', width: 'auto', borderRadius: 4 }}
                 />
-              ) : (
-                <Box sx={{ p: 3 }}>
-                  {current.text ? (
-                    <Typography variant="h6">{current.text}</Typography>
-                  ) : (
-                    <Typography variant="body1" color="text.secondary">No text defined for this number.</Typography>
-                  )}
-                </Box>
-              )}
             </Box>
           )}
         </DialogContent>

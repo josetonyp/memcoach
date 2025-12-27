@@ -55,6 +55,9 @@ const PairNumberConfiguration = () => {
       dispatch(setMemorizeTime(Number(localMemorizeTime) || 5));
     }
     dispatch(setTimerEnabled(localTimerEnabled));
+    // Close the configuration panel and reset the game
+    setOpen(false);
+    dispatch(reset());
   };
 
   return (
